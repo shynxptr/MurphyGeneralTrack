@@ -1,0 +1,16 @@
+{
+  "name": "discord-general-chat-tracker",
+  "version": "1.0.0",
+  "description": "Bot pelacak keaktifan General Chat Discord dengan filter kata, anti-spam, target harian, dan log lintas server",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --no-warnings src/index.js",
+    "deploy": "node --no-warnings src/deploy-commands.js",
+    "test": "node --no-warnings src/test-logic.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7"
+  }
+}
+
