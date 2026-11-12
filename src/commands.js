@@ -55,15 +55,18 @@ function isValidDateString(dateStr) {
 /**
  * Mengecek apakah pengguna adalah Admin Server atau Owner Bot (Akses Penuh Konfigurasi)
  */
-function isAdminOrOwner(interaction) {
+function isAdminOrOwner(ctx) {
   const ownerIds = (process.env.OWNER_IDS || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
 
-  if (ownerIds.includes(interaction.user.id)) return true;
-  if (interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) return true;
-  if (interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) return true;
+  const userId = ctx.user?.id || ctx.author?.id;
+  const perms = ctx.memberPermissions || ctx.member?.permissions;
+
+  if (userId && ownerIds.includes(userId)) return true;
+  if (perms?.has(PermissionFlagsBits.ManageGuild)) return true;
+  if (perms?.has(PermissionFlagsBits.Administrator)) return true;
   return false;
 }
 
@@ -496,6 +499,19 @@ const commandDefinitions = [
             .setMinValue(0)
             .setMaxValue(50)
             .setRequired(false)
+        )
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName('prefix')
+        .setDescription('Atur awalan prefix command teks (contoh: g -> gstatus, gmonitor)')
+        .addStringOption((opt) =>
+          opt
+            .setName('teks')
+            .setDescription('Prefix baru (maksimal 5 karakter, default: g)')
+            .setMinLength(1)
+            .setMaxLength(5)
+            .setRequired(true)
         )
     ),
 
@@ -988,6 +1004,21 @@ async function handleInteraction(interaction, client) {
       return interaction.reply({ embeds: [embed] });
     }
 
+    if (sub === 'prefix') {
+      const newPrefix = interaction.options.getString('teks', true).trim().toLowerCase();
+      setSetting('command_prefix', newPrefix);
+
+      const embed = new EmbedBuilder()
+        .setColor(THEME.SUCCESS)
+        .setTitle('⌨️ Prefix Command Diperbarui')
+        .setDescription(
+          `Prefix command teks berhasil diubah menjadi \`${newPrefix}\`.\n` +
+          `> Contoh penggunaan: \`${newPrefix}status\`, \`${newPrefix}monitor\`, \`${newPrefix}logs\`, \`${newPrefix}help\``
+        )
+        .setTimestamp();
+      return interaction.reply({ embeds: [embed] });
+    }
+
     if (sub === 'view') {
       const cfg = getConfig();
       const targetGuildId = resolveTargetGuildId(interaction);
@@ -1023,6 +1054,7 @@ async function handleInteraction(interaction, client) {
         .setDescription(
           `\`\`\`yaml\n` +
           `Server Utama   : ${mainGuild ? mainGuild.name : targetGuildId}\n` +
+          `Prefix Command : ${cfg.prefix} (contoh: ${cfg.prefix}status, ${cfg.prefix}monitor)\n` +
           `Target Harian  : ${cfg.dailyTarget} Pesan / Hari\n` +
           `Minimal Kata   : ${cfg.minWords} Kata Valid / Pesan\n` +
           `Anti-Monolog   : ${antiMonologStatus}\n` +
@@ -1463,5 +1495,11 @@ async function handleInteraction(interaction, client) {
 module.exports = {
   commandDefinitions,
   handleInteraction,
+  isAdminOrOwner,
   hasCommandAccess,
+  resolveTargetGuildId,
+  isValidDateString,
+  buildAccessDeniedEmbed,
+  buildStatsPayload,
+  buildMonitorPayload,
 };

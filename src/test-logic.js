@@ -21,6 +21,7 @@ const {
 } = require('./database');
 const { buildProgressBar, generateLogsCsv } = require('./utils');
 const { hasCommandAccess } = require('./commands');
+const { parsePrefixCommand } = require('./prefix-commands');
 const { buildDailyRecapPayload, buildNightReminderPayload } = require('./scheduler');
 
 console.log('🧪 Menjalankan Pengujian Sistem General Chat Tracker...\n');
@@ -104,6 +105,22 @@ console.log('🧪 Menjalankan Pengujian Sistem General Chat Tracker...\n');
 
   removeCommandRole(testGuildId, 'role_allowed_cmd');
   console.log('✅ [LULUS] Proteksi akses command khusus Role yang diizinkan (/command-role) berfungsi akurat.');
+}
+
+// 5b. Uji Parser Prefix Command (gstatus, gmonitor, dll vs chat biasa)
+{
+  const cmd1 = parsePrefixCommand('gstatus', 'g');
+  assert.deepStrictEqual(cmd1, { command: 'status', args: [] });
+
+  const cmd2 = parsePrefixCommand('GMonitor 7days', 'g');
+  assert.deepStrictEqual(cmd2, { command: 'monitor', args: ['7days'] });
+
+  const normalChat = parsePrefixCommand('gimana kabar kalian semua hari ini', 'g');
+  assert.strictEqual(normalChat, null, 'Chat biasa berawalan g tidak boleh dianggap command');
+
+  const spacedPrefix = parsePrefixCommand('g status', 'g');
+  assert.strictEqual(spacedPrefix, null, 'Spasi setelah g tidak boleh dianggap command');
+  console.log('✅ [LULUS] Parser Prefix Command (gstatus, gmonitor, dll) berfungsi akurat.');
 }
 
 // 6. Uji Database SQLite, Target Harian (100 pesan/hari), Bukti Log, & Export CSV (Tanpa Server Log Diset)

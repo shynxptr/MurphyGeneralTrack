@@ -176,6 +176,7 @@ function getConfig() {
     reminderChannelId: getSetting('reminder_channel_id', ''),
     cooldownSeconds: Number.isNaN(parsedCooldown) ? 5 : parsedCooldown,
     maxConsecutive: Number.isNaN(parsedMaxConsecutive) ? 3 : parsedMaxConsecutive,
+    prefix: getSetting('command_prefix', process.env.BOT_PREFIX || 'g'),
   };
 }
 

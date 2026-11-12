@@ -27,6 +27,7 @@ const {
 const { validateMessage } = require('./validator');
 const { THEME, getProgressStatus, buildProgressBar } = require('./utils');
 const { commandDefinitions, handleInteraction } = require('./commands');
+const { handlePrefixCommand } = require('./prefix-commands');
 const { startScheduler } = require('./scheduler');
 
 const client = new Client({
@@ -100,6 +101,12 @@ client.on(Events.MessageCreate, async (message) => {
   try {
     // 1. Abaikan pesan dari bot, webhook, sistem, atau DM
     if (!message.guild || message.author.bot || message.webhookId || message.system) {
+      return;
+    }
+
+    // 1b. Cek apakah pesan adalah Prefix Command (misal: gstatus, gmonitor, glogs, ghelp)
+    const handledAsCommand = await handlePrefixCommand(message, client);
+    if (handledAsCommand) {
       return;
     }
 
